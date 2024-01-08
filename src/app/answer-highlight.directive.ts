@@ -1,18 +1,23 @@
-import {Directive, ElementRef, OnInit} from '@angular/core';
+import {Directive, ElementRef, OnDestroy, OnInit} from '@angular/core';
 import {NgControl} from "@angular/forms";
-import {map} from "rxjs";
+import {map, Subscription} from "rxjs";
 
 @Directive({
   selector: '[appAnswerHighlight]',
   standalone: true
 })
-export class AnswerHighlightDirective implements OnInit {
+export class AnswerHighlightDirective implements OnInit,OnDestroy {
+  sub: Subscription | undefined;
 
   constructor(private elRef: ElementRef, private controlName: NgControl) {
   }
 
+  ngOnDestroy(): void {
+        this.sub?.unsubscribe();
+    }
+
   ngOnInit(): void {
-    this.controlName.control?.parent?.valueChanges.pipe(
+    this.sub = this.controlName.control?.parent?.valueChanges.pipe(
       map(({a, b, answer}) => {
         console.log(Math.abs((a + b - answer) / (a + b)));
         return Math.abs((a + b - answer) / (a + b));
@@ -20,8 +25,7 @@ export class AnswerHighlightDirective implements OnInit {
       .subscribe(val => {
         if (val < 0.2) {
           this.elRef.nativeElement.classList.add('highlight');
-        }
-        else {
+        } else {
           this.elRef.nativeElement.classList.remove('highlight');
         }
       });
